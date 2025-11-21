@@ -1,6 +1,9 @@
 package authService.service;
 
+import authService.dto.UserRegistrationRequest;
+import authService.entity.Role;
 import authService.entity.User;
+import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,22 +16,29 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final String DEFAULT_USER_ROLE="ROLE_USER";
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public User createUser(String username, String email, String password) {
-        if (userRepository.existsByUsername(username)) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public User createUser(UserRegistrationRequest userRegistrationRequest) {
+        if (userRepository.existsByUsername(userRegistrationRequest.username())) {
             throw new RuntimeException("Username is already taken");
         }
 
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(userRegistrationRequest.email())) {
             throw new RuntimeException("Email is already in use");
         }
-
-        User user = new User(username, passwordEncoder.encode(password),email);
+        Role defaultRole = roleRepository.findByName(DEFAULT_USER_ROLE).orElseThrow(()->new RuntimeException(String.format("Default role %s not found",DEFAULT_USER_ROLE)));
+        User user = new User(userRegistrationRequest.username(), passwordEncoder.encode(userRegistrationRequest.password()),userRegistrationRequest.email());
+        user.getRoles().add(defaultRole);
         return userRepository.save(user);
     }
 
@@ -43,9 +53,8 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public boolean validateUserCredentials(String username, String password) {
-        return userRepository.findByUsername(username)
-                .map(user -> passwordEncoder.matches(password, user.getPassword()))
-                .orElse(false);
+    public boolean validateUserCredentials(User user,String username, String password) {
+        return user.getUsername().equals(username) && passwordEncoder.matches(password, user.getPassword());
+
     }
 }

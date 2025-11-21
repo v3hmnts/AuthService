@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.core.GrantedAuthority;
 
 @Entity
@@ -11,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 @Getter
 @Setter
 @NoArgsConstructor
+@EnableJpaAuditing
 public class Role implements GrantedAuthority {
 
     @Id

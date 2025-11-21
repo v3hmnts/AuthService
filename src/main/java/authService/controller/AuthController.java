@@ -1,9 +1,6 @@
 package authService.controller;
 
-import authService.dto.AuthRequest;
-import authService.dto.AuthResponse;
-import authService.dto.TokenValidationResponse;
-import authService.dto.UserRegistrationRequest;
+import authService.dto.*;
 import authService.entity.RefreshToken;
 import authService.entity.User;
 import authService.security.JwtUtil;
@@ -36,12 +33,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
         try {
-            User user = userService.createUser(
-                    registrationRequest.username(),
-                    registrationRequest.email(),
-                    registrationRequest.password()
-            );
-
+            userService.createUser(registrationRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("User registered successfully");
 
@@ -52,87 +44,25 @@ public class AuthController {
     }
 
     @PostMapping("/token")
-    public ResponseEntity<?> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
-        try {
-            if (!userService.validateUserCredentials(authRequest.username(), authRequest.password())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ErrorResponse("Invalid credentials"));
-            }
-
-            final String accessToken = jwtUtil.generateAccessToken(authRequest.username());
-            final String refreshToken = jwtUtil.generateRefreshToken(authRequest.password());
-
-            // Create and save refresh token entity
-            tokenService.createRefreshToken(authRequest.username());
-
-            // Update last login
-            userService.updateLastLogin(authRequest.username());
-
-            AuthResponse authResponse = new AuthResponse(
-                    accessToken,
-                    refreshToken,
-                    jwtUtil.getJwtExpirationMs()
-            );
-
+    public ResponseEntity<AuthResponse> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
+            AuthResponse authResponse = tokenService.createAuthenticationToken(authRequest);
             return ResponseEntity.ok(authResponse);
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error creating token: " + e.getMessage()));
-        }
+
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<TokenValidationResponse> validateToken(@RequestParam String token) {
+    public ResponseEntity<TokenValidationResponse> validateToken(@RequestBody TokenValidationRequest tokenValidationRequest) {
         try {
-            if (jwtUtil.validateToken(token)) {
-                String username = jwtUtil.getUsernameFromToken(token);
-                return ResponseEntity.ok(new TokenValidationResponse(true, username, "Token is valid"));
-            } else {
-                return ResponseEntity.ok(new TokenValidationResponse(false, null, "Token is invalid"));
-            }
+           return ResponseEntity.ok(tokenService.validateAuthenticationToken(tokenValidationRequest.token()));
         } catch (Exception e) {
             return ResponseEntity.ok(new TokenValidationResponse(false, null, "Token validation failed: " + e.getMessage()));
         }
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestParam String refreshToken) {
-        try {
-            if (!jwtUtil.validateToken(refreshToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ErrorResponse("Invalid refresh token"));
-            }
-
-            String username = jwtUtil.getUsernameFromToken(refreshToken);
-
-            // Verify refresh token exists in database
-            Optional<RefreshToken> storedToken = tokenService.findByToken(refreshToken);
-            if (storedToken.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ErrorResponse("Refresh token not found"));
-            }
-
-            tokenService.verifyExpiration(storedToken.get());
-
-            final String newAccessToken = jwtUtil.generateAccessToken(username);
-            final String newRefreshToken = jwtUtil.generateRefreshToken(username);
-
-            // Update refresh token in database
-            tokenService.createRefreshToken(username);
-
-            AuthResponse authResponse = new AuthResponse(
-                    newAccessToken,
-                    newRefreshToken,
-                    jwtUtil.getJwtExpirationMs()
-            );
-
-            return ResponseEntity.ok(authResponse);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ErrorResponse(e.getMessage()));
-        }
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return ResponseEntity.ok(tokenService.createNewAuthTokenWithRefreshToken(refreshTokenRequest.refreshToken()));
     }
 
     // Error response DTO

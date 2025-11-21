@@ -3,9 +3,11 @@ package authService.service;
 import authService.controller.AuthController;
 import authService.dto.AuthRequest;
 import authService.dto.AuthResponse;
+import authService.dto.TokenValidationResponse;
 import authService.entity.RefreshToken;
 import authService.entity.User;
 import authService.repository.RefreshTokenRepository;
+import authService.repository.UserRepository;
 import authService.security.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,52 +16,75 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class TokenService {
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final UserService userService;
 
-    @Autowired
-    private UserService userService;
+    public TokenService(RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil, UserRepository userRepository, UserService userService) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.userService = userService;
+    }
 
-    public String createAuthenticationToken(AuthRequest authRequest){
-        try {
-            if (!userService.validateUserCredentials(authRequest.username(), authRequest.password())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new AuthController.ErrorResponse("Invalid credentials"));
+    public TokenValidationResponse validateAuthenticationToken(String token){
+
+        if(jwtUtil.validateToken(token)){
+            return new TokenValidationResponse(true,jwtUtil.getUsernameFromToken(token),"Token is valid");
+        }else {
+            return new TokenValidationResponse(false,null,"Token is not valid");
+        }
+    }
+
+    public AuthResponse createAuthenticationToken(AuthRequest authRequest){
+            User user = userRepository.findByUsername(authRequest.username()).orElseThrow(()->new RuntimeException("User not found"));
+
+            if (!userService.validateUserCredentials(user,authRequest.username(), authRequest.password())) {
+                throw new RuntimeException("Invalid credentials");
             }
 
-            final String accessToken = jwtUtil.generateAccessToken(authRequest.username());
-            final String refreshToken = jwtUtil.generateRefreshToken(authRequest.password());
+            final String accessToken = jwtUtil.generateAccessToken(user);
+            final String refreshToken = jwtUtil.generateRefreshToken();
 
             // Create and save refresh token entity
-            tokenService.createRefreshToken(authRequest.username());
+            refreshTokenRepository.save(new RefreshToken(refreshToken,user,LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpirationMs()/1000)));
 
             // Update last login
             userService.updateLastLogin(authRequest.username());
 
-            AuthResponse authResponse = new AuthResponse(
-                    accessToken,
-                    refreshToken,
-                    jwtUtil.getJwtExpirationMs()
-            );
-
-            return ResponseEntity.ok(authResponse);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AuthController.ErrorResponse("Error creating token: " + e.getMessage()));
-        }
+        return new AuthResponse(
+                accessToken,
+                refreshToken,
+                jwtUtil.getJwtExpirationMs(),
+                jwtUtil.getRefreshExpirationMs()
+        );
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
+
+    public AuthResponse createNewAuthTokenWithRefreshToken(String refreshToken){
+        RefreshToken refreshToken1 = refreshTokenRepository.findByToken(refreshToken).orElseThrow(()->new RuntimeException("Refresh token not found"));
+        if(refreshToken1.getExpiryDate().isBefore(LocalDateTime.now())){
+            refreshTokenRepository.delete(refreshToken1);
+            throw new RuntimeException("Refresh token is expired");
+        }
+        return new AuthResponse(
+                jwtUtil.generateAccessToken(refreshToken1.getUser()),
+                refreshToken,
+                jwtUtil.getJwtExpirationMs(),
+                jwtUtil.getRefreshExpirationMs()
+        );
+    }
+
+    public Optional<RefreshToken> findRefreshTokenByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 

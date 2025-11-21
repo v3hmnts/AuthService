@@ -1,7 +1,10 @@
 package authService.security;
 
+import authService.entity.Role;
+import authService.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,8 +14,11 @@ import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
+@Getter
 public class JwtUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
@@ -31,25 +37,21 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(String username) {
-        return generateToken(username, jwtExpirationMs);
-    }
-
-    public String generateRefreshToken(String username) {
-        return generateToken(username, refreshExpirationMs);
-    }
-
-    private String generateToken(String username, long expiration) {
+    public String generateAccessToken(User user) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
-
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
-                .subject(username)
-                .claims(Map.of("userId","1"))
+                .issuer("myapp/authservice")
+                .subject(user.getUsername())
+                .claims(Map.of("roles",user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet())))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String generateRefreshToken() {
+        return UUID.randomUUID().toString();
     }
 
     public String getUsernameFromToken(String token) {
@@ -96,7 +98,4 @@ public class JwtUtil {
         return claims.getExpiration();
     }
 
-    public long getJwtExpirationMs() {
-        return jwtExpirationMs;
-    }
 }
