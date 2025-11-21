@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: data-001-1
+      author: Vhmnts
+      comment: Insert default roles
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_USER
+              - column:
+                  name: description
+                  value: Regular user role
+
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_ADMIN
+              - column:
+                  name: description
+                  value: Administrator role

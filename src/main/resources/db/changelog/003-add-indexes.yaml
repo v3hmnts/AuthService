@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-1
+      author: Vhmnts
+      comment: Create indexes for better performance
+      changes:
+        - createIndex:
+            tableName: users
+            indexName: idx_users_username
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_email
+            columns:
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_token
+            columns:
+              - column:
+                  name: token
+                  type: VARCHAR(255)
+
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_user_id
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+
+        - createIndex:
+            tableName: refresh_tokens
+            indexName: idx_refresh_tokens_expiry_date
+            columns:
+              - column:
+                  name: expiry_date
+                  type: TIMESTAMP
+
+        - createIndex:
+            tableName: user_roles
+            indexName: idx_user_roles_user_id
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+
+        - createIndex:
+            tableName: user_roles
+            indexName: idx_user_roles_role_id
+            columns:
+              - column:
+                  name: role_id
+                  type: BIGINT
