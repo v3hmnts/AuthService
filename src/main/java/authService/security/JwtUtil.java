@@ -25,27 +25,36 @@ public class JwtUtil {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
+    private final KeyProvider keyProvider;
+
     @Value("${app.jwt.expiration}")
     private long jwtExpirationMs;
 
     @Value("${app.jwt.refresh-expiration}")
     private long refreshExpirationMs;
 
+    public JwtUtil(KeyProvider keyProvider) {
+        this.keyProvider = keyProvider;
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateAccessToken(User user) {
+    public String generateAccessToken(User user) throws Exception {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-        return Jwts.builder().header().type("JWT").and()
+        return Jwts.builder()
+                .header()
+                .type("JWT")
+                .and()
                 .subject(user.getUsername())
                 .issuer("myapp/authservice")
                 .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId().toString()))
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .signWith(keyProvider.getPrivateKey())
                 .compact();
     }
 
@@ -53,9 +62,9 @@ public class JwtUtil {
         return UUID.randomUUID().toString();
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getUsernameFromToken(String token) throws Exception {
         Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(keyProvider.getPublicKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -66,7 +75,7 @@ public class JwtUtil {
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getSigningKey())
+                    .verifyWith(keyProvider.getPublicKey())
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -82,14 +91,16 @@ public class JwtUtil {
             logger.error("JWT claims string is empty: {}", e.getMessage());
         } catch (JwtException e) {
             logger.error("JWT validation error: {}", e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         return false;
     }
 
-    public Date getExpirationDateFromToken(String token) {
+    public Date getExpirationDateFromToken(String token) throws Exception {
         Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(keyProvider.getPublicKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

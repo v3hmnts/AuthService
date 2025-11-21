@@ -30,7 +30,7 @@ public class TokenService {
         this.userRepository = userRepository;
     }
 
-    public TokenValidationResponse validateAuthenticationToken(String token) {
+    public TokenValidationResponse validateAuthenticationToken(String token) throws Exception {
         if (jwtUtil.validateToken(token)) {
             return new TokenValidationResponse(true, jwtUtil.getUsernameFromToken(token), "Token is valid");
         }
@@ -38,7 +38,7 @@ public class TokenService {
 
     }
 
-    public AuthResponse createAuthenticationToken(User user) {
+    public AuthResponse createAuthenticationToken(User user) throws Exception {
 
         final String accessToken = jwtUtil.generateAccessToken(user);
         final String refreshToken = jwtUtil.generateRefreshToken();
@@ -54,7 +54,7 @@ public class TokenService {
     }
 
 
-    public AuthResponse createNewAuthTokenWithRefreshToken(String refreshToken) {
+    public AuthResponse createNewAuthTokenWithRefreshToken(String refreshToken) throws Exception {
         RefreshToken refreshToken1 = refreshTokenRepository.findByToken(refreshToken).orElseThrow(() -> new RuntimeException("Refresh token not found"));
         if (refreshToken1.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken1);

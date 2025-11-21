@@ -35,7 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/token")
-    public ResponseEntity<AuthResponse> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
+    public ResponseEntity<AuthResponse> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) throws Exception {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.username(),authRequest.password()));
         User user = userService.loadUserByUsername(authRequest.username());
         AuthResponse authResponse = tokenService.createAuthenticationToken(user);
@@ -43,12 +43,12 @@ public class AuthController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<TokenValidationResponse> validateToken(@RequestBody TokenValidationRequest tokenValidationRequest) {
+    public ResponseEntity<TokenValidationResponse> validateToken(@RequestBody TokenValidationRequest tokenValidationRequest) throws Exception {
         return ResponseEntity.ok(tokenService.validateAuthenticationToken(tokenValidationRequest.token()));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) throws Exception {
         return ResponseEntity.ok(tokenService.createNewAuthTokenWithRefreshToken(refreshTokenRequest.refreshToken()));
     }
 
