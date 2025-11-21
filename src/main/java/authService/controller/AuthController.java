@@ -1,63 +1,50 @@
 package authService.controller;
 
 import authService.dto.*;
-import authService.entity.RefreshToken;
 import authService.entity.User;
-import authService.security.JwtUtil;
 import authService.service.TokenService;
 import authService.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired
-    private UserService userService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
 
-    @Autowired
-    private TokenService tokenService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, TokenService tokenService) {
+        this.userService = userService;
+        this.authenticationManager = authenticationManager;
+        this.tokenService = tokenService;
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
-        try {
-            userService.createUser(registrationRequest);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("User registered successfully");
-
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse(e.getMessage()));
-        }
+    public ResponseEntity<Void> registerUser(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
+        userService.createUser(registrationRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/token")
     public ResponseEntity<AuthResponse> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
-            AuthResponse authResponse = tokenService.createAuthenticationToken(authRequest);
-            return ResponseEntity.ok(authResponse);
-
-
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.username(),authRequest.password()));
+        User user = userService.loadUserByUsername(authRequest.username());
+        AuthResponse authResponse = tokenService.createAuthenticationToken(user);
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/validate")
     public ResponseEntity<TokenValidationResponse> validateToken(@RequestBody TokenValidationRequest tokenValidationRequest) {
-        try {
-           return ResponseEntity.ok(tokenService.validateAuthenticationToken(tokenValidationRequest.token()));
-        } catch (Exception e) {
-            return ResponseEntity.ok(new TokenValidationResponse(false, null, "Token validation failed: " + e.getMessage()));
-        }
+        return ResponseEntity.ok(tokenService.validateAuthenticationToken(tokenValidationRequest.token()));
     }
 
     @PostMapping("/refresh")
@@ -65,15 +52,4 @@ public class AuthController {
         return ResponseEntity.ok(tokenService.createNewAuthTokenWithRefreshToken(refreshTokenRequest.refreshToken()));
     }
 
-    // Error response DTO
-    public static class ErrorResponse {
-        private String message;
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-    }
 }

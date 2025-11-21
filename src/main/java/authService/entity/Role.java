@@ -19,22 +19,23 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
-    private String name;
+    private RoleType name;
 
     private String description;
 
     @Column(name = "created_at")
     private java.time.LocalDateTime createdAt;
 
-    @Override
-    public String getAuthority() {
-        return name;
-    }
-
-    public Role(String name, String description) {
+    public Role(RoleType name, String description) {
         this();
         this.name = name;
         this.description = description;
+    }
+
+    @Override
+    public String getAuthority() {
+        return name.name();
     }
 }

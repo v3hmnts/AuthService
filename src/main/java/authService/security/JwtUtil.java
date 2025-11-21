@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -40,10 +39,10 @@ public class JwtUtil {
     public String generateAccessToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-        return Jwts.builder()
-                .issuer("myapp/authservice")
+        return Jwts.builder().header().type("JWT").and()
                 .subject(user.getUsername())
-                .claims(Map.of("roles",user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet())))
+                .issuer("myapp/authservice")
+                .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId().toString()))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
