@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
@@ -26,7 +27,6 @@ public class JwtUtil {
     private long refreshExpirationMs;
 
     private SecretKey getSigningKey() {
-        // Ensure your secret is properly encoded for HMAC-SHA
         byte[] keyBytes = jwtSecret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -45,6 +45,7 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .subject(username)
+                .claims(Map.of("userId","1"))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
