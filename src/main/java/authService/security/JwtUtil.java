@@ -22,24 +22,16 @@ public class JwtUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
-
     private final KeyProvider keyProvider;
 
-    @Value("${app.jwt.expiration}")
+    @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    @Value("${app.jwt.refresh-expiration}")
+    @Value("${jwt.refresh-expiration}")
     private long refreshExpirationMs;
 
     public JwtUtil(KeyProvider keyProvider) {
         this.keyProvider = keyProvider;
-    }
-
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes();
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateAccessToken(User user) throws Exception {
@@ -79,23 +71,9 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token);
             return true;
-        } catch (SecurityException e) {
-            logger.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            logger.error("JWT token is expired: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            logger.error("JWT token is unsupported: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
-        } catch (JwtException e) {
-            logger.error("JWT validation error: {}", e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
-
-        return false;
     }
 
     public Date getExpirationDateFromToken(String token) throws Exception {

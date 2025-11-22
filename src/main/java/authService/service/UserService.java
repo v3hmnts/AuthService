@@ -4,9 +4,11 @@ import authService.dto.UserRegistrationRequest;
 import authService.entity.Role;
 import authService.entity.RoleType;
 import authService.entity.User;
+import authService.exception.RoleNotFoundException;
+import authService.exception.UserAlreadyExistsException;
+import authService.exception.UserNotFoundException;
 import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,23 +32,24 @@ public class UserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User createUser(UserRegistrationRequest userRegistrationRequest) {
+    public User createUser(UserRegistrationRequest userRegistrationRequest,RoleType roleType) {
         if (userRepository.existsByUsername(userRegistrationRequest.username())) {
-            throw new RuntimeException("Username is already taken");
+            throw new UserAlreadyExistsException("User with given username is already taken");
         }
 
         if (userRepository.existsByEmail(userRegistrationRequest.email())) {
-            throw new RuntimeException("Email is already in use");
+            throw new UserAlreadyExistsException("User with given email is already in use");
         }
-        Role defaultRole = roleRepository.findByName(DEFAULT_USER_ROLE).orElseThrow(() -> new RuntimeException(String.format("Default role %s not found", DEFAULT_USER_ROLE)));
+        Role userRole = roleRepository.findByName(roleType).orElseThrow(() -> new RoleNotFoundException(roleType.toString()));
         User user = new User(userRegistrationRequest.username(), passwordEncoder.encode(userRegistrationRequest.password()), userRegistrationRequest.email());
-        user.getRoles().add(defaultRole);
+        user.getRoles().add(userRole);
         return userRepository.save(user);
     }
 
+
     public void updateLastLogin(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(username));
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
     }
@@ -58,6 +61,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(()-> new RuntimeException(String.format("User with username=%s not found",username)));
+        return userRepository.findByUsername(username).orElseThrow(()-> new UserNotFoundException(username));
     }
 }

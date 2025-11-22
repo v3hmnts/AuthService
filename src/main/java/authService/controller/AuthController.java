@@ -1,6 +1,7 @@
 package authService.controller;
 
 import authService.dto.*;
+import authService.entity.RoleType;
 import authService.entity.User;
 import authService.service.TokenService;
 import authService.service.UserService;
@@ -30,7 +31,13 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Void> registerUser(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
-        userService.createUser(registrationRequest);
+        userService.createUser(registrationRequest, RoleType.ROLE_USER);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/register/admin")
+    public ResponseEntity<Void> registerAdmin(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
+        userService.createUser(registrationRequest,RoleType.ROLE_ADMIN);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

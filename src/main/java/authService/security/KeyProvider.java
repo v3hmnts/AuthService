@@ -22,7 +22,8 @@ public class KeyProvider {
         return parsePrivateKey(privateKey);
     }
 
-    public RSAPublicKey getPublicKey() throws Exception {
+    public RSAPublicKey
+    getPublicKey() throws Exception {
         return parsePublicKey(publicKey);
     }
 

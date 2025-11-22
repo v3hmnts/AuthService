@@ -29,17 +29,17 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(max = 50)
+    @NotBlank(message = "Surname shouldn't be empty")
+    @Size(min = 3, max = 100, message = "Surname length should be between 3 and 100 characters")
     @Column(unique = true)
     private String username;
 
     @NotBlank
-    @Size(max = 120)
+    @Size(min = 6, max = 120, message = "Password should contain between 6 and 120 characters")
     private String password;
 
-    @NotBlank
-    @Size(max = 100)
+    @Email(message = "Email should be valid")
+    @Size(min = 6, max = 255, message = "Email length should be between 6 and 255 characters")
     @Email
     @Column(unique = true)
     private String email;
