@@ -11,7 +11,7 @@
     <groupId>com.example</groupId>
     <artifactId>authService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>authService</name>
+    <name>auth-service</name>
     <description>Demo project for Spring Boot</description>
     <url/>
     <licenses>
@@ -29,6 +29,7 @@
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.12.7</jjwt.version>
+        <docker.image.prefix>auth-service</docker.image.prefix>
     </properties>
     <dependencies>
         <dependency>
@@ -111,6 +112,12 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
+                    <image>
+                        <name>${docker.image.prefix}/${project.name}:latest</name>
+                    </image>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

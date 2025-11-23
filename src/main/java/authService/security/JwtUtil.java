@@ -43,7 +43,7 @@ public class JwtUtil {
                 .and()
                 .subject(user.getUsername())
                 .issuer("myapp/authservice")
-                .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId().toString()))
+                .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId()))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(keyProvider.getPrivateKey())

@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 001-1
+      id: 002-1
       author: Vhmnts
       comment: Create users table
       changes:
@@ -48,7 +48,7 @@ databaseChangeLog:
                   defaultValue: true
 
   - changeSet:
-      id: 001-2
+      id: 002-2
       author: Vhmnts
       comment: Create refresh_tokens table
       changes:
@@ -90,7 +90,7 @@ databaseChangeLog:
                   defaultValue: false
 
   - changeSet:
-      id: 001-3
+      id: 002-3
       author: Vhmnts
       comment: Create roles table
       changes:
@@ -119,7 +119,7 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
 
   - changeSet:
-      id: 001-4
+      id: 002-4
       author: Vhmnts
       comment: Create user_roles junction table
       changes:
