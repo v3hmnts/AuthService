@@ -1,7 +1,6 @@
-package authService.controller;
+package authService.exception;
 
 import authService.dto.ErrorResponse;
-import authService.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -32,12 +31,16 @@ public class ControllerAdvice {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({RefreshTokenExpiredException.class,UserAlreadyExistsException.class})
-    public ResponseEntity<ErrorResponse> handleException(RuntimeException exception){
-        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.BAD_REQUEST,null),HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(RuntimeException exception){
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.CONFLICT,null),HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler({RefreshTokenExpiredException.class,RefreshTokenNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleERefreshTokenException(RuntimeException exception){
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.UNAUTHORIZED,null),HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler({RefreshTokenNotFoundException.class, RoleNotFoundException.class, UserNotFoundException.class})
+    @ExceptionHandler({RoleNotFoundException.class, UserNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException exception){
         return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.NOT_FOUND,null),HttpStatus.NOT_FOUND);
     }

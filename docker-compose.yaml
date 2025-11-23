@@ -24,6 +24,7 @@ services:
       - DB_URL=jdbc:postgresql://database:5432/${POSTGRES_DB}
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - SPRING_PROFILES_ACTIVE=dev
     ports:
       - "9090:9090"
     networks:

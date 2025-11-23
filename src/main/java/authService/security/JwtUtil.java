@@ -43,7 +43,7 @@ public class JwtUtil {
                 .and()
                 .subject(user.getUsername())
                 .issuer("myapp/authservice")
-                .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId()))
+                .claims(Map.of("roles", user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toSet()), "userId", user.getId().toString()))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(keyProvider.getPrivateKey())
@@ -72,8 +72,9 @@ public class JwtUtil {
                     .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            logger.error(e.getMessage());
         }
+        return false;
     }
 
     public Date getExpirationDateFromToken(String token) throws Exception {

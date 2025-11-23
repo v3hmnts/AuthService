@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -12,7 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 @Getter
 @Setter
 @NoArgsConstructor
-@EnableJpaAuditing
+@EntityListeners(AuditingEntityListener.class)
 public class Role implements GrantedAuthority {
 
     @Id
@@ -25,6 +27,7 @@ public class Role implements GrantedAuthority {
 
     private String description;
 
+    @CreatedDate
     @Column(name = "created_at")
     private java.time.LocalDateTime createdAt;
 

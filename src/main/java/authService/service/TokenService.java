@@ -36,7 +36,6 @@ public class TokenService {
             return new TokenValidationResponse(true, jwtUtil.getUsernameFromToken(token), "Token is valid");
         }
         return new TokenValidationResponse(false, null, "Token is not valid");
-
     }
 
     public AuthResponse createAuthenticationToken(User user) throws Exception {
