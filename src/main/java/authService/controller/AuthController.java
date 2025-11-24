@@ -30,13 +30,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> registerUser(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
+    public ResponseEntity<Void> registerUser(@Valid @RequestBody RegistrationRequest registrationRequest) {
         userService.createUser(registrationRequest, RoleType.ROLE_USER);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/register/admin")
-    public ResponseEntity<Void> registerAdmin(@Valid @RequestBody UserRegistrationRequest registrationRequest) {
+    public ResponseEntity<Void> registerAdmin(@Valid @RequestBody RegistrationRequest registrationRequest) {
         userService.createUser(registrationRequest,RoleType.ROLE_ADMIN);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

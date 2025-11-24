@@ -18,8 +18,12 @@ public class KeyProvider {
     @Value("${jwt.public-key}")
     private String publicKey;
 
-    public RSAPrivateKey getPrivateKey() throws Exception {
-        return parsePrivateKey(privateKey);
+    public RSAPrivateKey getPrivateKey()  {
+        try {
+            return parsePrivateKey(privateKey);
+        } catch (Exception e) {
+            throw new RuntimeException("PrivateKey parsing problems");
+        }
     }
 
     public RSAPublicKey
