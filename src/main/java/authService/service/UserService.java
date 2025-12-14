@@ -1,8 +1,8 @@
 package authService.service;
 
-import authService.dto.RegistrationRequest;
-import authService.dto.UserRegistrationRequest;
-import authService.dto.UserServiceUserDto;
+import authService.dto.UserRegistrationRequestDto;
+import authService.dto.UserServiceUserRegistrationRequestDto;
+import authService.dto.UserServiceUserRegistrationResponseDto;
 import authService.entity.Role;
 import authService.entity.RoleType;
 import authService.entity.User;
@@ -12,21 +12,16 @@ import authService.exception.UserNotFoundException;
 import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.header.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
-import java.sql.Date;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
 
+@Slf4j
 @Service
 @Transactional
 public class UserService implements UserDetailsService {
@@ -35,16 +30,20 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserServiceRestClient userServiceClient;
+    private final TokenService tokenService;
     private final JwtUtil jwtUtil;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, UserServiceRestClient userServiceClient, TokenService tokenService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userServiceClient = userServiceClient;
+        this.tokenService = tokenService;
         this.jwtUtil = jwtUtil;
     }
 
-    public User createUser(UserRegistrationRequest userRegistrationRequest, RoleType roleType) {
+    public User createUser(UserRegistrationRequestDto userRegistrationRequest, RoleType roleType) throws Exception {
         if (userRepository.existsByUsername(userRegistrationRequest.username())) {
             throw new UserAlreadyExistsException("User with given username is already taken");
         }
@@ -56,8 +55,24 @@ public class UserService implements UserDetailsService {
         User user = new User(userRegistrationRequest.username(), passwordEncoder.encode(userRegistrationRequest.password()), userRegistrationRequest.email());
         user.getRoles().add(userRole);
 
-        user.setId(userRegistrationRequest.id());
-        return userRepository.save(user);
+        UserServiceUserRegistrationRequestDto userRegistrationRequestDto = new UserServiceUserRegistrationRequestDto(
+                userRegistrationRequest.name(),
+                userRegistrationRequest.surname(),
+                userRegistrationRequest.birthDate(),
+                userRegistrationRequest.email()
+        );
+        UserServiceUserRegistrationResponseDto userRegistrationResponseDto = userServiceClient.processUserRegistrationInUserService(userRegistrationRequestDto);
+        if (userRegistrationResponseDto.getId() != null) {
+            user.setId(userRegistrationResponseDto.getId());
+        }
+        try {
+            user = userRepository.save(user);
+        } catch (Exception e) {
+            log.error("Compensating userRegistration with userId:{}", userRegistrationResponseDto.getId());
+            userServiceClient.compensateUserServiceRegistrationIfFailed(userRegistrationResponseDto.getId());
+            throw new RuntimeException("Internal error");
+        }
+        return user;
     }
 
 
@@ -75,6 +90,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(()-> new UserNotFoundException(username));
+        return userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
     }
 }

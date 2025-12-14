@@ -1,19 +1,15 @@
 package authService.security;
 
 import authService.entity.Role;
-import authService.entity.RoleType;
 import authService.entity.User;
-import authService.exception.InvalidServiceApiKeyException;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -54,12 +50,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateServiceAccessToken(String apiKey) throws Exception {
-        logger.info("GOT API_KEY = {}", apiKey);
-        logger.info("ENV API_KEY = {}", keyProvider.getInternalApiKey());
-        if(!apiKey.equals(keyProvider.getInternalApiKey())){
-            throw new InvalidServiceApiKeyException();
-        }
+    public String generateServiceAccessToken() throws Exception {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
@@ -68,14 +59,14 @@ public class JwtUtil {
                 .and()
                 .subject("service")
                 .issuer("myapp/authservice")
-                .claims(Map.of("roles", Set.of("ROLE_INTERNAL_SERVICE"),"userId","1"))
+                .claims(Map.of("roles", Set.of("ROLE_INTERNAL_SERVICE"), "userId", "1"))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(keyProvider.getPrivateKey())
                 .compact();
     }
 
-    public String generateAdminAccessToken(){
+    public String generateAdminAccessToken() {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
@@ -84,7 +75,7 @@ public class JwtUtil {
                 .and()
                 .subject("Admin")
                 .issuer("myapp/authservice")
-                .claims(Map.of("roles", Set.of("ROLE_ADMIN"),"userId","1"))
+                .claims(Map.of("roles", Set.of("ROLE_ADMIN"), "userId", "1"))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(keyProvider.getPrivateKey())
