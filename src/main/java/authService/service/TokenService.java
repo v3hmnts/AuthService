@@ -1,10 +1,9 @@
 package authService.service;
 
-import authService.dto.AuthResponse;
-import authService.dto.TokenValidationResponse;
-import authService.dto.UserServiceUserDto;
+import authService.dto.*;
 import authService.entity.RefreshToken;
 import authService.entity.User;
+import authService.exception.InvalidServiceApiKeyException;
 import authService.exception.RefreshTokenExpiredException;
 import authService.exception.RefreshTokenNotFoundException;
 import authService.exception.UserNotFoundException;
@@ -12,11 +11,10 @@ import authService.repository.RefreshTokenRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -26,7 +24,6 @@ public class TokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-
 
     public TokenService(RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil, UserRepository userRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
@@ -54,6 +51,14 @@ public class TokenService {
                 jwtUtil.getJwtExpirationMs(),
                 jwtUtil.getRefreshExpirationMs()
         );
+    }
+
+    public ServiceAuthResponse createNewServiceToken(String apiKey) throws Exception {
+            final String accessToken = jwtUtil.generateServiceAccessToken(apiKey);
+            return new ServiceAuthResponse(
+                    accessToken,
+                    jwtUtil.getJwtExpirationMs()
+            );
     }
 
 

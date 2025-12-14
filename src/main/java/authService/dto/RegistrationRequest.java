@@ -1,13 +1,14 @@
 package authService.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.sql.Date;
 
 public record RegistrationRequest(
+
+        @NotNull
+        Long id,
+
         @NotBlank(message = "Name shouldn't be empty")
         @Size(min = 3, max = 100, message = "Name length should be between 3 and 100 characters")
         String username,

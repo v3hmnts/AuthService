@@ -3,6 +3,7 @@ package authService.security;
 import authService.entity.Role;
 import authService.entity.RoleType;
 import authService.entity.User;
+import authService.exception.InvalidServiceApiKeyException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
@@ -53,6 +54,27 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateServiceAccessToken(String apiKey) throws Exception {
+        logger.info("GOT API_KEY = {}", apiKey);
+        logger.info("ENV API_KEY = {}", keyProvider.getInternalApiKey());
+        if(!apiKey.equals(keyProvider.getInternalApiKey())){
+            throw new InvalidServiceApiKeyException();
+        }
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        return Jwts.builder()
+                .header()
+                .type("JWT")
+                .and()
+                .subject("service")
+                .issuer("myapp/authservice")
+                .claims(Map.of("roles", Set.of("ROLE_INTERNAL_SERVICE"),"userId","1"))
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(keyProvider.getPrivateKey())
+                .compact();
+    }
+
     public String generateAdminAccessToken(){
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
@@ -62,7 +84,7 @@ public class JwtUtil {
                 .and()
                 .subject("Admin")
                 .issuer("myapp/authservice")
-                .claims(Map.of("roles", Set.of("ROLE_ADMIN")))
+                .claims(Map.of("roles", Set.of("ROLE_ADMIN"),"userId","1"))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(keyProvider.getPrivateKey())

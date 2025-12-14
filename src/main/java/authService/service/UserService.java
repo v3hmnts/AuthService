@@ -44,7 +44,7 @@ public class UserService implements UserDetailsService {
         this.jwtUtil = jwtUtil;
     }
 
-    public User createUser(RegistrationRequest userRegistrationRequest, RoleType roleType) {
+    public User createUser(UserRegistrationRequest userRegistrationRequest, RoleType roleType) {
         if (userRepository.existsByUsername(userRegistrationRequest.username())) {
             throw new UserAlreadyExistsException("User with given username is already taken");
         }
@@ -56,20 +56,7 @@ public class UserService implements UserDetailsService {
         User user = new User(userRegistrationRequest.username(), passwordEncoder.encode(userRegistrationRequest.password()), userRegistrationRequest.email());
         user.getRoles().add(userRole);
 
-        String adminToken = jwtUtil.generateAdminAccessToken();
-        UserServiceUserDto userDto = new UserServiceUserDto(null,user.getUsername(), userRegistrationRequest.surname(), userRegistrationRequest.birthDate(),user.getEmail(),true);
-
-        UserServiceUserDto userServiceUserDto = RestClient.create("http://172.17.0.1:8080/api/v1/users")
-                .post()
-                .header("Authorization", "Bearer " + adminToken)
-                .body(userDto)
-                .retrieve()
-                .body(UserServiceUserDto.class);
-
-        if(userServiceUserDto==null){
-            throw new RuntimeException("Failed to create user");
-        }
-        user.setId(userServiceUserDto.id());
+        user.setId(userRegistrationRequest.id());
         return userRepository.save(user);
     }
 
