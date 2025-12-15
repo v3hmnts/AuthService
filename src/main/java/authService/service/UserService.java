@@ -9,6 +9,7 @@ import authService.entity.User;
 import authService.exception.RoleNotFoundException;
 import authService.exception.UserAlreadyExistsException;
 import authService.exception.UserNotFoundException;
+import authService.exception.UserRegistrationException;
 import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
@@ -51,6 +52,7 @@ public class UserService implements UserDetailsService {
         if (userRepository.existsByEmail(userRegistrationRequest.email())) {
             throw new UserAlreadyExistsException("User with given email is already in use");
         }
+
         Role userRole = roleRepository.findByName(roleType).orElseThrow(() -> new RoleNotFoundException(roleType.toString()));
         User user = new User(userRegistrationRequest.username(), passwordEncoder.encode(userRegistrationRequest.password()), userRegistrationRequest.email());
         user.getRoles().add(userRole);
@@ -62,10 +64,14 @@ public class UserService implements UserDetailsService {
                 userRegistrationRequest.email()
         );
         UserServiceUserRegistrationResponseDto userRegistrationResponseDto = userServiceClient.processUserRegistrationInUserService(userRegistrationRequestDto);
+        try {
         if (userRegistrationResponseDto.getId() != null) {
             user.setId(userRegistrationResponseDto.getId());
         }
-        try {
+        int randomValue = (int) (Math.random()*3);
+        if(randomValue<=1){
+            throw new Exception("Something went wrong");      }
+
             user = userRepository.save(user);
         } catch (Exception e) {
             log.error("Compensating userRegistration with userId:{}", userRegistrationResponseDto.getId());
