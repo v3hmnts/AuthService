@@ -20,7 +20,7 @@ public class UserServiceRestClient {
     private final Logger logger = LoggerFactory.getLogger(UserServiceRestClient.class);
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
-    @Value("${user-service.base-url")
+    @Value("${user-service.base-url}")
     private String USER_SERVICE_BASE_URL;
     @Value("${user.service.timeout.seconds:2}")
     private int userServiceDefaultTimeOut;
@@ -42,6 +42,7 @@ public class UserServiceRestClient {
     @CircuitBreaker(name = "userServiceClient")
     @Retry(name = "userServiceClient")
     public UserServiceUserRegistrationResponseDto processUserRegistrationInUserService(UserServiceUserRegistrationRequestDto requestDto) throws Exception {
+        logger.info("POST to "+USER_SERVICE_BASE_URL);
         UserServiceUserRegistrationResponseDto response = restClient
                 .post()
                 .uri("/api/v1/users")
