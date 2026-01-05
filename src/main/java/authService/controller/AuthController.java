@@ -3,6 +3,7 @@ package authService.controller;
 import authService.dto.*;
 import authService.entity.RoleType;
 import authService.entity.User;
+import authService.security.SecurityUser;
 import authService.service.TokenService;
 import authService.service.UserService;
 import jakarta.validation.Valid;
@@ -40,8 +41,8 @@ public class AuthController {
     @PostMapping("/token")
     public ResponseEntity<AuthResponse> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) throws Exception {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password()));
-        User user = userService.loadUserByUsername(authRequest.username());
-        AuthResponse authResponse = tokenService.createAuthenticationToken(user);
+        SecurityUser securityUser = userService.loadUserByUsername(authRequest.username());
+        AuthResponse authResponse = tokenService.createAuthenticationToken(securityUser);
         return ResponseEntity.ok(authResponse);
     }
 

@@ -10,6 +10,7 @@ import authService.exception.UserNotFoundException;
 import authService.repository.RefreshTokenRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
+import authService.security.SecurityUser;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -37,12 +38,12 @@ public class TokenService {
         return new TokenValidationResponse(false, null, "Token is not valid");
     }
 
-    public AuthResponse createAuthenticationToken(User user) throws Exception {
+    public AuthResponse createAuthenticationToken(SecurityUser securityUser) throws Exception {
 
-        final String accessToken = jwtUtil.generateAccessToken(user);
+        final String accessToken = jwtUtil.generateAccessToken(securityUser.getUser());
         final String refreshToken = jwtUtil.generateRefreshToken();
 
-        refreshTokenRepository.save(new RefreshToken(refreshToken, user, LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpirationMs() / 1000)));
+        refreshTokenRepository.save(new RefreshToken(refreshToken, securityUser.getUser(), LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpirationMs() / 1000)));
 
         return new AuthResponse(
                 accessToken,

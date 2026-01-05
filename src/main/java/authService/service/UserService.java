@@ -13,6 +13,7 @@ import authService.exception.UserRegistrationException;
 import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
+import authService.security.SecurityUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -95,7 +96,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+    public SecurityUser loadUserByUsername(String username) throws UsernameNotFoundException {
+        return new SecurityUser(userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username)));
     }
 }
