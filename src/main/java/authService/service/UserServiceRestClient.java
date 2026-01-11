@@ -7,7 +7,6 @@ import authService.exception.UserRegistrationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +22,7 @@ public class UserServiceRestClient {
     private final String USER_SERVICE_BASE_URL;
     private final RestClient restClient;
 
-    public UserServiceRestClient(@Value("${user-service.base-url}") String userServiceBaseUrl,TokenService tokenService, ObjectMapper objectMapper) {
+    public UserServiceRestClient(@Value("${user-service.base-url}") String userServiceBaseUrl, TokenService tokenService, ObjectMapper objectMapper) {
         this.tokenService = tokenService;
         this.objectMapper = objectMapper;
         this.USER_SERVICE_BASE_URL = userServiceBaseUrl;
@@ -43,8 +42,11 @@ public class UserServiceRestClient {
                 .body(requestDto)
                 .retrieve()
                 .onStatus(httpStatusCode -> !httpStatusCode.is2xxSuccessful(), (request, resp) -> {
+                    logger.info(resp.getStatusCode().toString());
+                    logger.info(resp.getStatusText().toString());
+                    logger.info(objectMapper.writeValueAsString(resp.getBody()));
                     logger.warn("Failed to craete new user in userService");
-                    throw new UserRegistrationException(objectMapper.convertValue(resp.getBody(), ErrorResponse.class));
+                    throw new UserRegistrationException("Failed to create user");
                 })
                 .body(UserServiceUserRegistrationResponseDto.class);
 
@@ -61,7 +63,7 @@ public class UserServiceRestClient {
                 .retrieve()
                 .onStatus(httpStatusCode -> !httpStatusCode.is2xxSuccessful(), (request, resp) -> {
                     logger.warn("Failed to compensate userRegistration with userId: {}", userId);
-                    throw new UserRegistrationException(objectMapper.convertValue(resp.getBody(), ErrorResponse.class));
+                    throw new UserRegistrationException("Failed to compensate user");
                 })
                 .body(UserServiceUserRegistrationResponseDto.class);
     }

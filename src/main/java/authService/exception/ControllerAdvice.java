@@ -33,7 +33,7 @@ public class ControllerAdvice {
 
     @ExceptionHandler(UserRegistrationException.class)
     public ResponseEntity<ErrorResponse> handleUserRegistrationException(UserRegistrationException exception) {
-        return new ResponseEntity<>(exception.getErrorResponse(), exception.getErrorResponse().status());
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(), exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
