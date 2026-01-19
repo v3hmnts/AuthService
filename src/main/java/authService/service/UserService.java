@@ -69,10 +69,6 @@ public class UserService implements UserDetailsService {
             if (userRegistrationResponseDto.getId() != null) {
                 user.setId(userRegistrationResponseDto.getId());
             }
-            int randomValue = (int) (Math.random()*3);
-            if(randomValue<=1){
-                throw new Exception("Something went wrong");
-            }
             user = userRepository.save(user);
         } catch (Exception e) {
             log.error("Compensating userRegistration with userId:{}", userRegistrationResponseDto.getId());
