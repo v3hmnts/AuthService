@@ -13,6 +13,7 @@ import authService.exception.UserRegistrationException;
 import authService.repository.RoleRepository;
 import authService.repository.UserRepository;
 import authService.security.JwtUtil;
+import authService.security.SecurityUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -65,13 +66,9 @@ public class UserService implements UserDetailsService {
         );
         UserServiceUserRegistrationResponseDto userRegistrationResponseDto = userServiceClient.processUserRegistrationInUserService(userRegistrationRequestDto);
         try {
-        if (userRegistrationResponseDto.getId() != null) {
-            user.setId(userRegistrationResponseDto.getId());
-        }
-        int randomValue = (int) (Math.random()*3);
-        if(randomValue<=1){
-            throw new Exception("Something went wrong");      }
-
+            if (userRegistrationResponseDto.getId() != null) {
+                user.setId(userRegistrationResponseDto.getId());
+            }
             user = userRepository.save(user);
         } catch (Exception e) {
             log.error("Compensating userRegistration with userId:{}", userRegistrationResponseDto.getId());
@@ -95,7 +92,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+    public SecurityUser loadUserByUsername(String username) throws UsernameNotFoundException {
+        return new SecurityUser(userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username)));
     }
 }
