@@ -31,17 +31,23 @@ public class ControllerAdvice {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(RuntimeException exception){
-        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.CONFLICT,null),HttpStatus.CONFLICT);
+    @ExceptionHandler(UserRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleUserRegistrationException(UserRegistrationException exception) {
+        return new ResponseEntity<>(exception.getErrorResponse(), exception.getErrorResponse().status());
     }
-    @ExceptionHandler({RefreshTokenExpiredException.class,RefreshTokenNotFoundException.class})
-    public ResponseEntity<ErrorResponse> handleERefreshTokenException(RuntimeException exception){
-        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.UNAUTHORIZED,null),HttpStatus.UNAUTHORIZED);
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(RuntimeException exception) {
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(), exception.getMessage(), HttpStatus.CONFLICT, null), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({RefreshTokenExpiredException.class, RefreshTokenNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleERefreshTokenException(RuntimeException exception) {
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(), exception.getMessage(), HttpStatus.UNAUTHORIZED, null), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler({RoleNotFoundException.class, UserNotFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException exception){
-        return new ResponseEntity<>(new ErrorResponse(Instant.now(),exception.getMessage(), HttpStatus.NOT_FOUND,null),HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException exception) {
+        return new ResponseEntity<>(new ErrorResponse(Instant.now(), exception.getMessage(), HttpStatus.NOT_FOUND, null), HttpStatus.NOT_FOUND);
     }
 }

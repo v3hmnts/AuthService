@@ -2,7 +2,6 @@ package authService.service;
 
 import authService.dto.AuthResponse;
 import authService.dto.TokenValidationResponse;
-import authService.dto.UserServiceUserDto;
 import authService.entity.RefreshToken;
 import authService.entity.User;
 import authService.exception.RefreshTokenExpiredException;
@@ -13,10 +12,8 @@ import authService.repository.UserRepository;
 import authService.security.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -26,7 +23,6 @@ public class TokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-
 
     public TokenService(RefreshTokenRepository refreshTokenRepository, JwtUtil jwtUtil, UserRepository userRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
@@ -54,6 +50,10 @@ public class TokenService {
                 jwtUtil.getJwtExpirationMs(),
                 jwtUtil.getRefreshExpirationMs()
         );
+    }
+
+    public String createNewServiceToken() throws Exception {
+        return jwtUtil.generateServiceAccessToken();
     }
 
 

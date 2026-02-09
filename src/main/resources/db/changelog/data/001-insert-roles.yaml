@@ -23,3 +23,12 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Administrator role
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_INTERNAL_SERVICE
+              - column:
+                  name: description
+                  value: Role for internal service calls

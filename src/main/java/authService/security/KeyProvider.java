@@ -18,7 +18,7 @@ public class KeyProvider {
     @Value("${jwt.public-key}")
     private String publicKey;
 
-    public RSAPrivateKey getPrivateKey()  {
+    public RSAPrivateKey getPrivateKey() {
         try {
             return parsePrivateKey(privateKey);
         } catch (Exception e) {
